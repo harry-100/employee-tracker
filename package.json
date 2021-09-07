@@ -1,36 +1,19 @@
 {
-  "name": "employee-tracker",
+  "name": "new-week-12",
   "version": "1.0.0",
-  "description": "the app keeps track of employees of a business",
-  "main": "index.js",
+  "description": "",
+  "main": "server.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
-    "start": "nodemon index.js"
+    "start": "node server.js"
   },
-  "repository": {
-    "type": "git",
-    "url": "git+https://github.com/harry-100/employee-tracker.git"
-  },
-  "keywords": [
-    "mysql",
-    "node",
-    "inquirer",
-    "mysql2"
-  ],
-  "author": "Harry",
-  "license": "MIT",
-  "bugs": {
-    "url": "https://github.com/harry-100/employee-tracker/issues"
-  },
-  "homepage": "https://github.com/harry-100/employee-tracker#readme",
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
   "dependencies": {
     "console.table": "^0.10.0",
     "dotenv": "^10.0.0",
-    "express": "^4.17.1",
     "inquirer": "^8.1.2",
     "mysql2": "^2.3.0"
-  },
-  "devDependencies": {
-    "nodemon": "^2.0.12"
   }
 }
