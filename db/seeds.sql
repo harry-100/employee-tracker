@@ -16,15 +16,15 @@ VALUES
 INSERT INTO employee(first_name, last_name, role_id, manager_id)
 VALUES
     ('Rafael', 'Nadal', 1, NULL),
-    ('Andre', 'Agassi', 2, 3),
+    ('Andre', 'Agassi', 2, 1),
     ('Ivan', 'Lendl', 3, NULL),
-    ('Jimmy', 'Connors', 4, NULL),
+    ('Jimmy', 'Connors', 4, 2),
     ('Mats', 'Wilander', 5, 3),
-    ('John', 'McEnroe', 6, NULL),
+    ('John', 'McEnroe', 6, 3),
     ('Boris', 'Becker', 1, 3),
     ('Martina', 'Navratilova', 2, NULL),
-    ('Steffi', 'Graf', 2, 8),
-    ('Gabriela', 'Sabatini', 3, 8),
-    ('Serena', 'Williams', 4, 8),
-    ('Roger', 'Federer', 6, 8);
+    ('Steffi', 'Graf', 2, 4),
+    ('Gabriela', 'Sabatini', 3, 4),
+    ('Serena', 'Williams', 4, 5),
+    ('Roger', 'Federer', 6, 5);
     

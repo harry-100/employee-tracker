@@ -1,18 +1,24 @@
 const db = require('./db/connection');
 const mysql = require('mysql2');
 const cTable = require('console.table');
+
 const userInfo = require('./server');
 
-showDepartments = () => {
+showDepartments = async () => {
     const sql = `SELECT * FROM department`;
-    db.query(sql, (err, rows) => {
-        if(err) throw err;
-        console.table(rows);
-        userInfo();
-    });
+    const test1 = db.promise().query(sql)
+    return test1
+  
+    // console.log('test1=', test1);
 };
+viewAllDepartments = () => {
+    showDepartments().then(([rows]) => {
+        console.table('rows', rows);
+        // userInfo();
+    });
+}
 
-showRoles = () => {
+viewAllRoles = () => {
     const sql = `SELECT * FROM role`;
     db.query(sql, (err, rows) => {
         if(err) throw err;
@@ -21,4 +27,4 @@ showRoles = () => {
     });
 };
 
-module.exports = {showDepartments, showRoles};
+module.exports = {showDepartments, showRoles, viewAllDepartments};
