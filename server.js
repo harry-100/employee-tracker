@@ -80,7 +80,7 @@ viewAllDepartments = () => {
 };
 
 viewAllEmployees = () => {
-    const sql = `SELECT employee.id, employee.first_name, employee.last_name, role.title, department.department_name, role.salary, employee.manager_id FROM employee INNER JOIN role ON employee.role_id = role.id INNER JOIN department ON role.department_id = department.id`;
+    const sql = `SELECT employee.id, employee.first_name, employee.last_name, role.title, department.department_name, role.salary, employee.manager_id FROM employee INNER JOIN role ON employee.role_id = role.id INNER JOIN department ON role.department_id = department.id ORDER BY employee.id ASC`;
     db.query(sql, (err, rows) => {
         if(err) throw err;
         // adding manager column with first and last name combined
@@ -136,5 +136,96 @@ const addRole = () => {
             message: 'Enter the salary'
         }
     ])
-    .then(response)
+    .then(response => {
+        const params = [response.name, response.salary];
+        const existingDepartments = `SELECT department_name, id FROM department`;
+        db.query(existingDepartments, (err, rows) => {
+            if(err) throw err;
+            const department = rows.map(({ department_name, id }) => ({ name: department_name, value: id}));
+            inquirer.prompt([
+                {
+                    type: 'list',
+                    name: 'department',
+                    message: 'Choose the department for this role',
+                    choices: department
+                }
+            ])
+            .then(selectedDepartment  => {
+                const department = selectedDepartment.department;
+                params.push(department);
+                const sql = `INSERT INTO role (title, salary, department_id)
+                             VALUES (?, ?, ?)`;
+                db.query(sql, params, (err, rows) => {
+                    if(err) throw err;
+                    console.log(`${response.role} added to Roles`)
+                    viewAllRoles();
+                });
+            });
+        });
+    });
 }
+
+const addEmployee = () => {
+    return inquirer.prompt([
+        {
+            type: 'input',
+            name: 'first_name',
+            message: 'Enter the first name of the employee'
+        },
+        {
+            type: 'input',
+            name: 'last_name',
+            message: 'Enter the last name of the employee'
+        },
+    ])
+    .then(response => {
+        const params = [response.first_name, response.last_name];
+        const sql = `SELECT title, id FROM role`;
+        db.query(sql, (err, rows) => {
+            if(err) throw err;
+            const roles  = rows.map(({ title, id}) => ({name: title, value: id}));
+            inquirer.prompt([
+                {
+                    type: 'list',
+                    name: 'role',
+                    message: 'Choose the role of the new employee',
+                    choices: roles
+                }
+            ])
+            .then(selectedRole => {
+                console.log("rolessss", selectedRole.role);
+                const role = selectedRole.role;
+                params.push(role);
+                const sql = `INSERT INTO employee (first_name, last_name, role_id) VALUES (?, ?, ?)`;
+                db.query(sql, params, (err, rows) => {
+                    if(err) throw err;
+                    console.log(`${response.first_name} ${response.last_name} added as a new employee`);
+                    viewAllEmployees();
+                })
+            })
+        })
+    })
+    .then( (params) => {
+      const existingEmployees = `SELECT first_name, last_name, id FROM employee`;
+      db.query(existingEmployees, (err, rows) => {
+          if(err) throw err;
+          const employees = rows.map(({ first_name, last_name, id}) => ({
+              name:first_name + " " + last_name, value:id}));
+
+              inquirer.prompt([
+                  {
+                      type: 'list',
+                      name: 'manager',
+                      message: 'Choose the manager for the new employee',
+                      choices: employees
+                  }
+              ])
+              .then(selectedManager => {
+                  const manager = selectedManager.manager;
+                  params.push(manager);
+                  console.log('the manager is ', manager);
+
+              })
+          })
+      }) 
+    }
