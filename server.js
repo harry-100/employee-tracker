@@ -2,9 +2,8 @@ const db = require('./db/connection');
 const inquirer = require('inquirer');
 const mysql = require('mysql2');
 const cTable = require('console.table');
-// const { showDepartments, showRoles, viewAllDepartments} = require('./dbQueries');
 
-//Start DB connection
+//Start Database connection
 
 db.connect(err => {
     if(err) throw err;
@@ -17,7 +16,7 @@ const userInfo = () => {
             type: 'list',
             name: 'action',
             message: 'What would you like to do',
-            choices: ['View All Departments', 'View All Roles', 'View All Employees', 'Add a Department', 'Add a Role', 'Add an Employee', 'Update an Employee', 'Delete an Employee', 'View Employees by Department', 'View Employees by Manager', 'View the total budget', 'Exit']
+            choices: ['View All Departments', 'View All Roles', 'View All Employees', 'Add a Department', 'Add a Role', 'Add an Employee', 'Update an Employee', 'Delete an Employee', 'View Employees by Department', 'View Employees by Manager', 'Exit']
        }
     ])
     .then(userResponse => {
@@ -60,7 +59,7 @@ const userInfo = () => {
 
             case 'View Employees by Manager':
             viewEmployeesByManager();
-            break;     
+            break; 
 
             case 'Exit':
                 console.log('Good Bye');
@@ -72,6 +71,8 @@ const userInfo = () => {
 
 userInfo();
 
+
+//  Query to view all the Roles
 viewAllRoles = () => {
     const sql = `SELECT role.id, role.title, role.salary, department.department_name 
                  FROM role 
@@ -84,6 +85,7 @@ viewAllRoles = () => {
     });
 };
 
+// Query to view all the Departments
 viewAllDepartments = () => {
     const sql = `SELECT * FROM department`;
     db.query(sql, (err, rows) => {
@@ -93,8 +95,16 @@ viewAllDepartments = () => {
     });
 };
 
+//  Query to view all the Employees
 viewAllEmployees = () => {
-    const sql = `SELECT employee.id, employee.first_name, employee.last_name, role.title, department.department_name, role.salary, employee.manager_id FROM employee INNER JOIN role ON employee.role_id = role.id INNER JOIN department ON role.department_id = department.id ORDER BY employee.id ASC`;
+    const sql = `SELECT employee.id, employee.first_name, employee.last_name, role.title, 
+                department.department_name, role.salary, employee.manager_id 
+                FROM employee 
+                INNER JOIN role 
+                ON employee.role_id = role.id 
+                INNER JOIN department 
+                ON role.department_id = department.id 
+                ORDER BY employee.id ASC`;
     db.query(sql, (err, rows) => {
         if(err) throw err;
         // adding manager column with first and last name combined
@@ -113,7 +123,7 @@ viewAllEmployees = () => {
     })
 }
 
-// Adding a department
+// Query to add a department
 
 const addDepartment = () => {
     return inquirer.prompt([
@@ -135,7 +145,7 @@ const addDepartment = () => {
     
 };
 
-// Adding a role
+// Query to add a role
 
 const addRole = () => {
     return inquirer.prompt([
@@ -179,6 +189,7 @@ const addRole = () => {
     });
 }
 
+//  Query to add an Employee
 const addEmployee = () => {
     return inquirer.prompt([
         {
@@ -207,7 +218,6 @@ const addEmployee = () => {
                 }
             ])
             .then(selectedRole => {
-                console.log("rolessss", selectedRole.role);
                 const role = selectedRole.role;
                 params.push(role);
                 const existingEmployees = `SELECT first_name, last_name, id FROM employee`;
@@ -241,7 +251,7 @@ const addEmployee = () => {
     })
     }
 
-    // Update employee role
+    // Query to Update an employee role
     const updateEmployee = () => {
         let sql = `SELECT first_name, last_name, id FROM employee`;
         db.query(sql, (err, rows) => {
@@ -287,36 +297,43 @@ const addEmployee = () => {
             })
         }
 
-        // Delete an Employee
-        deleteEmployee = () => {
-            sql = `SELECT first_name, last_name, id FROM employee`;
-            db.query(sql, (err, rows) => {
-                if (err) throw err;
-                const employees = rows.map(({ first_name, last_name, id}) => ({ name: first_name + " " + last_name, value: id}));
-            inquirer.prompt([
-                {
-                    type: 'list',
-                    name: 'employee',
-                    message: 'Select the employee to be deleted',
-                    choices: employees
-                },
+        // Query to Delete an Employee
+    deleteEmployee = () => {
+        sql = `SELECT first_name, last_name, id FROM employee`;
+        db.query(sql, (err, rows) => {
+            if (err) throw err;
+            const employees = rows.map(({ first_name, last_name, id}) => ({ name: first_name + " " + last_name, value: id}));
+        inquirer.prompt([
+            {
+                type: 'list',
+                name: 'employee',
+                message: 'Select the employee to be deleted',
+                choices: employees
+            },
 
-            ])
-            .then(selectedEmployee => {
-                const params = [selectedEmployee.employee];
-                let sql = `DELETE FROM employee WHERE id = ?`;
-                db.query(sql, params, (err, rows) => {
-                    if(err) throw err;
-                    console.log('${selectedEmployee.employee} deleted');
-                    viewAllEmployees();
-        })
+        ])
+        .then(selectedEmployee => {
+            const params = [selectedEmployee.employee];
+            let sql = `DELETE FROM employee WHERE id = ?`;
+            db.query(sql, params, (err, rows) => {
+                if(err) throw err;
+                console.log('${selectedEmployee.employee} deleted');
+                viewAllEmployees();
     })
-    })
-    }
+})
+})
+}
 
-    // View employees by department
+    // Query to View employees by department
     viewEmployeesByDepartment = () => {
-         const sql = `SELECT employee.id, employee.first_name, employee.last_name, role.title, department.department_name, role.salary, employee.manager_id FROM employee INNER JOIN role ON employee.role_id = role.id INNER JOIN department ON role.department_id = department.id ORDER BY department.department_name ASC`; 
+         const sql = `SELECT employee.id, employee.first_name, employee.last_name, role.title, 
+                    department.department_name, role.salary, employee.manager_id 
+                    FROM employee 
+                    INNER JOIN role 
+                    ON employee.role_id = role.id 
+                    INNER JOIN department 
+                    ON role.department_id = department.id 
+                    ORDER BY department.department_name ASC`; 
 
         db.query(sql, (err, rows) => {
             if(err) throw err;
@@ -336,23 +353,31 @@ const addEmployee = () => {
         })
     }
 
-    // View employees by Manager
+    // Query to View employees by Manager
     viewEmployeesByManager = () => {
-                const sql = `SELECT employee.id, employee.first_name, employee.last_name, role.title, department.department_name, role.salary, employee.manager_id FROM employee INNER JOIN role ON employee.role_id = role.id INNER JOIN department ON role.department_id = department.id ORDER BY employee.manager_id ASC`;
-                db.query(sql, (err, rows) => {
-                    if(err) throw err;
-                    // adding manager column with first and last name combined
-                    for (let i = 0; i < rows.length; i++) {
-                        if (rows[i].manager_id == null) {
-                            rows[i].manager = 'None';
-                        }
-                        else {
-                            rows[i].manager = rows[rows[i].manager_id - 1].first_name + " " + rows[rows[i].manager_id - 1].last_name;
-                        }
-                        //  removing manager_id column from the table for display
-                        delete rows[i].manager_id;
+            const sql = `SELECT employee.id, employee.first_name, employee.last_name, 
+            role.title, department.department_name, role.salary, employee.manager_id 
+            FROM employee 
+            INNER JOIN role 
+            ON employee.role_id = role.id 
+            INNER JOIN department 
+            ON role.department_id = department.id 
+            ORDER BY employee.manager_id ASC`;
+            db.query(sql, (err, rows) => {
+                if(err) throw err;
+                // adding manager column with first and last name combined
+                for (let i = 0; i < rows.length; i++) {
+                    if (rows[i].manager_id == null) {
+                        rows[i].manager = 'None';
                     }
-                    console.table(rows);
-                    userInfo();
-                })
-            }
+                    else {
+                        rows[i].manager = rows[rows[i].manager_id - 1].first_name + " " + rows[rows[i].manager_id - 1].last_name;
+                    }
+                    //  removing manager_id column from the table for display
+                    delete rows[i].manager_id;
+                }
+                console.table(rows);
+                userInfo();
+            })
+        }
+
