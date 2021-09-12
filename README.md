@@ -1,9 +1,9 @@
 # employee-tracker
 ![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)
 
-## [Application Url](https://noteawesome-taker.herokuapp.com/ )
+## [Walkthrough Video](https://drive.google.com/file/d/1qEBUUkaBZwSFgbF1n5dME1psl6R0YeWO/view)
 
-## [GitHub Url](https://github.com/harry-100/note-taker)
+## [GitHub Url](https://github.com/harry-100/employee-tracker)
 
 ## Description
 
