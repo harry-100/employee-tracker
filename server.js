@@ -17,9 +17,8 @@ const userInfo = () => {
             type: 'list',
             name: 'action',
             message: 'What would you like to do',
-            choices: ['View All Departments', 'View All Roles', 'View All Employees', 'Add a Department', 'Add a Role', 'Add an Employee', 'Update an Employee', 'Exit']
-/*             choices: ['View All Departments', 'View All Roles', 'View All Employees', 'Add a Department', 'Add a Role', 'Add an Employee', 'Update an Employee', 'Exit']
- */        }
+            choices: ['View All Departments', 'View All Roles', 'View All Employees', 'Add a Department', 'Add a Role', 'Add an Employee', 'Update an Employee', 'Delete an Employee', 'View Employees by Department', 'View Employees by Manager', 'View the total budget', 'Exit']
+       }
     ])
     .then(userResponse => {
         switch(userResponse.action) {
@@ -50,6 +49,18 @@ const userInfo = () => {
             case 'Update an Employee':
                 updateEmployee();
                 break;
+            
+            case 'Delete an Employee':
+                deleteEmployee();
+                break;
+
+            case 'View Employees by Department':
+                viewEmployeesByDepartment();
+                break;
+
+            case 'View Employees by Manager':
+            viewEmployeesByManager();
+            break;     
 
             case 'Exit':
                 console.log('Good Bye');
@@ -62,7 +73,10 @@ const userInfo = () => {
 userInfo();
 
 viewAllRoles = () => {
-    const sql = `SELECT role.id, role.title, role.salary, department.department_name FROM role INNER JOIN department ON role.department_id = department.id`;
+    const sql = `SELECT role.id, role.title, role.salary, department.department_name 
+                 FROM role 
+                 INNER JOIN department 
+                 ON role.department_id = department.id`;
     db.query(sql, (err, rows) => {
         if(err) throw err;
         console.table(rows);
@@ -196,36 +210,149 @@ const addEmployee = () => {
                 console.log("rolessss", selectedRole.role);
                 const role = selectedRole.role;
                 params.push(role);
-                const sql = `INSERT INTO employee (first_name, last_name, role_id) VALUES (?, ?, ?)`;
-                db.query(sql, params, (err, rows) => {
+                const existingEmployees = `SELECT first_name, last_name, id FROM employee`;
+                db.query(existingEmployees, (err, rows) => {
                     if(err) throw err;
-                    console.log(`${response.first_name} ${response.last_name} added as a new employee`);
-                    viewAllEmployees();
-                })
-            })
+                    const employees = rows.map(({ first_name, last_name, id}) => ({
+                        name:first_name + " " + last_name, value:id}));
+          
+                        inquirer.prompt([
+                            {
+                                type: 'list',
+                                name: 'manager',
+                                message: 'Choose the manager for the new employee',
+                                choices: employees
+                            }
+                        ])
+                        .then(selectedManager => {
+                            const manager = selectedManager.manager;
+                            params.push(manager);
+                            console.log('the manager is ', manager);
+                            const sql = `INSERT INTO employee (first_name, last_name, role_id, manager_id) VALUES (?, ?, ?, ?)`;
+                            db.query(sql, params, (err, rows) => {
+                                if(err) throw err;
+                                console.log(`${response.first_name} ${response.last_name} added as a new employee`);
+                                viewAllEmployees();
+                            })
+                        })
+                    })
+                }) 
         })
     })
-    .then( (params) => {
-      const existingEmployees = `SELECT first_name, last_name, id FROM employee`;
-      db.query(existingEmployees, (err, rows) => {
-          if(err) throw err;
-          const employees = rows.map(({ first_name, last_name, id}) => ({
-              name:first_name + " " + last_name, value:id}));
-
-              inquirer.prompt([
-                  {
-                      type: 'list',
-                      name: 'manager',
-                      message: 'Choose the manager for the new employee',
-                      choices: employees
-                  }
-              ])
-              .then(selectedManager => {
-                  const manager = selectedManager.manager;
-                  params.push(manager);
-                  console.log('the manager is ', manager);
-
-              })
-          })
-      }) 
     }
+
+    // Update employee role
+    const updateEmployee = () => {
+        let sql = `SELECT first_name, last_name, id FROM employee`;
+        db.query(sql, (err, rows) => {
+            if (err)throw err;
+            const employees = rows.map(({ first_name, last_name, id}) => ({ name: first_name + " " + last_name, value: id}));
+            inquirer.prompt([
+                {
+                    type: 'list',
+                    name: 'employee',
+                    message: 'Select the employee whose role is to be changed',
+                    choices: employees
+                },
+
+            ])
+            .then(selectedEmployee => {
+                const params = [selectedEmployee.employee];
+                let sql = `SELECT title, id FROM role`;
+                db.query(sql, (err, rows) => {
+                    if(err) throw err;
+                    const roles = rows.map(({ title, id}) => ({
+                        name: title, value: id}));
+                        inquirer.prompt([
+                            {
+                                type: 'list',
+                                name: 'role',
+                                message: 'Choose the new role',
+                                choices: roles
+                            }
+                        ])
+                        .then(selectedRole => {
+                            const role = selectedRole.role;
+                            params.unshift(role);
+                            let sql = `UPDATE employee SET role_id = ?
+                                   WHERE id = ?`;
+                            db.query(sql, params, (err, rows) => {
+                                if (err) throw err;
+                                console.log(`Employee's Role updated`)
+                                viewAllEmployees();
+                            })       
+                        })
+                    })
+                })
+            })
+        }
+
+        // Delete an Employee
+        deleteEmployee = () => {
+            sql = `SELECT first_name, last_name, id FROM employee`;
+            db.query(sql, (err, rows) => {
+                if (err) throw err;
+                const employees = rows.map(({ first_name, last_name, id}) => ({ name: first_name + " " + last_name, value: id}));
+            inquirer.prompt([
+                {
+                    type: 'list',
+                    name: 'employee',
+                    message: 'Select the employee to be deleted',
+                    choices: employees
+                },
+
+            ])
+            .then(selectedEmployee => {
+                const params = [selectedEmployee.employee];
+                let sql = `DELETE FROM employee WHERE id = ?`;
+                db.query(sql, params, (err, rows) => {
+                    if(err) throw err;
+                    console.log('${selectedEmployee.employee} deleted');
+                    viewAllEmployees();
+        })
+    })
+    })
+    }
+
+    // View employees by department
+    viewEmployeesByDepartment = () => {
+         const sql = `SELECT employee.id, employee.first_name, employee.last_name, role.title, department.department_name, role.salary, employee.manager_id FROM employee INNER JOIN role ON employee.role_id = role.id INNER JOIN department ON role.department_id = department.id ORDER BY department.department_name ASC`; 
+
+        db.query(sql, (err, rows) => {
+            if(err) throw err;
+            // adding manager column with first and last name combined
+            for (let i = 0; i < rows.length; i++) {
+                if (rows[i].manager_id == null) {
+                    rows[i].manager = 'None';
+                }
+                else {
+                    rows[i].manager = rows[rows[i].manager_id - 1].first_name + " " + rows[rows[i].manager_id - 1].last_name;
+                }
+                //  removing manager_id column from the table for display
+                delete rows[i].manager_id;
+            }
+            console.table(rows);
+            userInfo();
+        })
+    }
+
+    // View employees by Manager
+    viewEmployeesByManager = () => {
+                const sql = `SELECT employee.id, employee.first_name, employee.last_name, role.title, department.department_name, role.salary, employee.manager_id FROM employee INNER JOIN role ON employee.role_id = role.id INNER JOIN department ON role.department_id = department.id ORDER BY employee.manager_id ASC`;
+                db.query(sql, (err, rows) => {
+                    if(err) throw err;
+                    // adding manager column with first and last name combined
+                    for (let i = 0; i < rows.length; i++) {
+                        if (rows[i].manager_id == null) {
+                            rows[i].manager = 'None';
+                        }
+                        else {
+                            rows[i].manager = rows[rows[i].manager_id - 1].first_name + " " + rows[rows[i].manager_id - 1].last_name;
+                        }
+                        //  removing manager_id column from the table for display
+                        delete rows[i].manager_id;
+                    }
+                    console.table(rows);
+                    userInfo();
+                })
+            }
